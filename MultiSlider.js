@@ -1,5 +1,3 @@
-// @flow
-
 import React from 'react';
 import PropTypes from 'prop-types';
 
@@ -151,6 +149,7 @@ export default class MultiSlider extends React.Component {
 
     const nextState = {};
     if (
+      nextProps.step !== this.props.step ||
       nextProps.min !== this.props.min ||
       nextProps.max !== this.props.max ||
       nextProps.values[0] !== this.state.valueOne ||
@@ -162,8 +161,6 @@ export default class MultiSlider extends React.Component {
       this.optionsArray =
         this.props.optionsArray ||
         createArray(nextProps.min, nextProps.max, nextProps.step);
-
-      this.stepLength = this.props.sliderLength / this.optionsArray.length;
 
       const positionOne = valueToPosition(
         nextProps.values[0],
@@ -244,11 +241,13 @@ export default class MultiSlider extends React.Component {
           ),
         },
         () => {
-          const change = [this.state.valueOne];
-          if (this.state.valueTwo) {
-            change.push(this.state.valueTwo);
+          if (this.props.snapped) {
+            const change = [this.state.valueOne];
+            if (this.state.valueTwo) {
+              change.push(this.state.valueTwo);
+            }
+            this.props.onValuesChange(change);
           }
-          this.props.onValuesChange(change);
         },
       );
       return;
@@ -367,6 +366,7 @@ export default class MultiSlider extends React.Component {
       this.state.positionTwo -
       (this.state.markerOneWidth / 2 + this.state.markerTwoWidth / 2);
     const collision = this.state.positionOne >= safePositionOne;
+    const equalValues = this.state.valueOne === this.state.valueTwo;
 
     if (gestureState.moveX === 0 && this.props.onToggleOne) {
       this.props.onToggleOne();
@@ -390,11 +390,13 @@ export default class MultiSlider extends React.Component {
           ),
         },
         () => {
-          const change = [this.state.valueOne];
-          if (this.state.valueTwo) {
-            change.push(this.state.valueTwo);
+          if (this.props.snapped || !equalValues) {
+            const change = [this.state.valueOne];
+            if (this.state.valueTwo) {
+              change.push(this.state.valueTwo);
+            }
+            this.props.onValuesChange(change);
           }
-          this.props.onValuesChange(change);
         },
       );
     }
@@ -419,27 +421,25 @@ export default class MultiSlider extends React.Component {
       this.state.positionOne +
       (this.state.markerOneWidth / 2 + this.state.markerTwoWidth / 2);
     const collision = this.state.positionTwo <= safePositionTwo;
-    const equalValues = this.state.valueOne === this.state.valueTwo;
 
     if (gestureState.moveX === 0 && this.props.onToggleTwo) {
       this.props.onToggleTwo();
       return;
     }
 
-    if (collision && gestureState.dx < 0 && this.props.snapped && equalValues) {
+    if (collision && gestureState.dx < 0 && this.props.snapped) {
+      const newPositionTwo = valueToPosition(
+        this.state.valueTwo + this.props.step,
+        this.optionsArray,
+        this.props.sliderLength,
+      );
+
       this.setState(
         {
           twoPressed: !this.state.twoPressed,
-          positionTwo: valueToPosition(
-            this.state.valueTwo + 1,
-            this.optionsArray,
-            this.props.sliderLength,
-          ),
-          valueTwo: positionToValue(
-            this.state.pastTwo,
-            this.optionsArray,
-            this.props.sliderLength,
-          ),
+          positionTwo: newPositionTwo,
+          pastTwo: newPositionTwo,
+          valueTwo: this.state.valueTwo + this.props.step,
         },
         () => {
           this.props.onValuesChange([this.state.valueOne, this.state.valueTwo]);
