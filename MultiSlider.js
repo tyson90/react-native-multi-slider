@@ -214,11 +214,25 @@ export default class MultiSlider extends React.Component {
       this.state.positionTwo -
       (this.state.markerOneWidth / 2 + this.state.markerTwoWidth / 2);
     const collision = this.state.positionOne >= safePositionOne;
+    const unconfined = I18nManager.isRTL
+      ? this.state.pastOne - gestureState.dx
+      : gestureState.dx + this.state.pastOne;
+    const bottom = 0;
+    const trueTop =
+      this.state.positionTwo - (this.props.allowOverlap ? 0 : this.stepLength);
+    const top = trueTop === 0 ? 0 : trueTop || this.props.sliderLength;
+    const confined =
+      unconfined < bottom ? bottom : unconfined > top ? top : unconfined;
+    const slipDisplacement = this.props.touchDimensions.slipDisplacement;
 
+    // disabled marker one
     if (!this.props.enabledOne) {
       return;
     }
 
+    // prevent overlapping two markers once there can be
+    // a collision between them and gesture is performed
+    // to the right side
     if (twoMarkers && collision && gestureState.dx > 0) {
       this.setState(
         {
@@ -240,17 +254,7 @@ export default class MultiSlider extends React.Component {
       return;
     }
 
-    const unconfined = I18nManager.isRTL
-      ? this.state.pastOne - gestureState.dx
-      : gestureState.dx + this.state.pastOne;
-    const bottom = 0;
-    const trueTop =
-      this.state.positionTwo - (this.props.allowOverlap ? 0 : this.stepLength);
-    const top = trueTop === 0 ? 0 : trueTop || this.props.sliderLength;
-    const confined =
-      unconfined < bottom ? bottom : unconfined > top ? top : unconfined;
-    const slipDisplacement = this.props.touchDimensions.slipDisplacement;
-
+    // regular marker movement
     if (Math.abs(gestureState.dy) < slipDisplacement || !slipDisplacement) {
       const value = positionToValue(
         confined,
@@ -289,11 +293,24 @@ export default class MultiSlider extends React.Component {
       this.state.positionOne +
       (this.state.markerOneWidth / 2 + this.state.markerTwoWidth / 2);
     const collision = this.state.positionTwo <= safePositionTwo;
+    const unconfined = I18nManager.isRTL
+      ? this.state.pastTwo - gestureState.dx
+      : gestureState.dx + this.state.pastTwo;
+    const bottom =
+      this.state.positionOne + (this.props.allowOverlap ? 0 : this.stepLength);
+    const top = this.props.sliderLength;
+    const confined =
+      unconfined < bottom ? bottom : unconfined > top ? top : unconfined;
+    const slipDisplacement = this.props.touchDimensions.slipDisplacement;
 
+    // disabled marker two
     if (!this.props.enabledTwo) {
       return;
     }
 
+    // prevent overlapping two markers once there can be
+    // a collision between them and gesture is performed
+    // to the left side
     if (collision && gestureState.dx < 0) {
       this.setState(
         {
@@ -311,16 +328,7 @@ export default class MultiSlider extends React.Component {
       return;
     }
 
-    const unconfined = I18nManager.isRTL
-      ? this.state.pastTwo - gestureState.dx
-      : gestureState.dx + this.state.pastTwo;
-    const bottom =
-      this.state.positionOne + (this.props.allowOverlap ? 0 : this.stepLength);
-    const top = this.props.sliderLength;
-    const confined =
-      unconfined < bottom ? bottom : unconfined > top ? top : unconfined;
-    const slipDisplacement = this.props.touchDimensions.slipDisplacement;
-
+    // regular marker movement
     if (Math.abs(gestureState.dy) < slipDisplacement || !slipDisplacement) {
       const value = positionToValue(
         confined,
@@ -411,9 +419,32 @@ export default class MultiSlider extends React.Component {
       this.state.positionOne +
       (this.state.markerOneWidth / 2 + this.state.markerTwoWidth / 2);
     const collision = this.state.positionTwo <= safePositionTwo;
+    const equalValues = this.state.valueOne === this.state.valueTwo;
 
     if (gestureState.moveX === 0 && this.props.onToggleTwo) {
       this.props.onToggleTwo();
+      return;
+    }
+
+    if (collision && gestureState.dx < 0 && this.props.snapped && equalValues) {
+      this.setState(
+        {
+          twoPressed: !this.state.twoPressed,
+          positionTwo: valueToPosition(
+            this.state.valueTwo + 1,
+            this.optionsArray,
+            this.props.sliderLength,
+          ),
+          valueTwo: positionToValue(
+            this.state.pastTwo,
+            this.optionsArray,
+            this.props.sliderLength,
+          ),
+        },
+        () => {
+          this.props.onValuesChange([this.state.valueOne, this.state.valueTwo]);
+        },
+      );
       return;
     }
 
