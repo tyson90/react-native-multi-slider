@@ -1,11 +1,16 @@
 {
   "name": "react-native-multi-slider",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "Android and iOS supported pure JS slider component with multiple markers for React Native",
-  "main": "MultiSlider.js",
+  "main": "lib/MultiSlider.js",
+  "files": [
+    "lib/"
+  ],
   "scripts": {
-    "prettier": "prettier --single-quote --trailing-comma all --bracket-spacing --write \"**/*.js\""
-  },  
+    "prettier": "prettier --single-quote --trailing-comma all --bracket-spacing --write \"**/*.js\"",
+    "prepare": "babel src --out-dir lib --source-maps && flow-copy-source src lib",
+    "preprepare": "rm -rf lib/"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ptomasroos/react-native-multi-slider.git"
@@ -26,14 +31,14 @@
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
-    }  
+    }
   },
   "lint-staged": {
     "*.js": [
       "./node_modules/.bin/prettier --single-quote --trailing-comma all --bracket-spacing --write",
       "git add"
     ]
-  },  
+  },
   "author": "Tomas Roos <ptomasroos@gmail.com>",
   "license": "MIT",
   "peerDependencies": {
@@ -41,8 +46,12 @@
     "react-native": "*"
   },
   "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.2.2",
+    "flow-copy-source": "^2.0.2",
     "husky": "^1.1.2",
     "lint-staged": "^7.3.0",
+    "metro-react-native-babel-preset": "^0.51.1",
     "prettier": "^1.14.3"
   },
   "bugs": {

@@ -1,5 +1,3 @@
-// @flow
-
 // Find closest index for a given value
 const closest = (array, n) => {
   let minI = 0;
