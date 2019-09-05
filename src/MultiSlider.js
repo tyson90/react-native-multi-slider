@@ -112,6 +112,7 @@ export default class MultiSlider extends React.Component {
       markerTwoWidth: 0,
       markerOneHeight: 0,
       markerTwoHeight: 0,
+      sliderAvailableSize: this.props.sliderLength,
     };
   }
 
@@ -209,7 +210,7 @@ export default class MultiSlider extends React.Component {
     const twoMarkers = this.props.values.length === 2;
     const safePositionOne =
       this.state.positionTwo -
-      (this.state.markerOneWidth / 2 + this.state.markerTwoWidth / 2);
+      (this.state.markerOneWidth + this.state.markerTwoWidth);
     const collision = this.state.positionOne >= safePositionOne;
     const unconfined = I18nManager.isRTL
       ? this.state.pastOne - gestureState.dx
@@ -237,7 +238,7 @@ export default class MultiSlider extends React.Component {
           valueOne: positionToValue(
             safePositionOne,
             this.optionsArray,
-            this.props.sliderLength,
+            this.state.sliderAvailableSize,
           ),
         },
         () => {
@@ -258,7 +259,7 @@ export default class MultiSlider extends React.Component {
       const value = positionToValue(
         confined,
         this.optionsArray,
-        this.props.sliderLength,
+        this.state.sliderAvailableSize,
       );
       const snapped = valueToPosition(
         value,
@@ -290,7 +291,7 @@ export default class MultiSlider extends React.Component {
   moveTwo = gestureState => {
     const safePositionTwo =
       this.state.positionOne +
-      (this.state.markerOneWidth / 2 + this.state.markerTwoWidth / 2);
+      (this.state.markerOneWidth + this.state.markerTwoWidth);
     const collision = this.state.positionTwo <= safePositionTwo;
     const unconfined = I18nManager.isRTL
       ? this.state.pastTwo - gestureState.dx
@@ -315,9 +316,9 @@ export default class MultiSlider extends React.Component {
         {
           positionTwo: safePositionTwo,
           valueTwo: positionToValue(
-            safePositionTwo,
+            safePositionTwo - this.state.sliderUnavailableLength,
             this.optionsArray,
-            this.props.sliderLength,
+            this.state.sliderAvailableSize,
           ),
         },
         () => {
@@ -330,9 +331,9 @@ export default class MultiSlider extends React.Component {
     // regular marker movement
     if (Math.abs(gestureState.dy) < slipDisplacement || !slipDisplacement) {
       const value = positionToValue(
-        confined,
+        confined - this.state.sliderUnavailableLength,
         this.optionsArray,
-        this.props.sliderLength,
+        this.state.sliderAvailableSize,
       );
       const snapped = valueToPosition(
         value,
@@ -364,7 +365,7 @@ export default class MultiSlider extends React.Component {
     const twoMarkers = this.props.values.length === 2;
     const safePositionOne =
       this.state.positionTwo -
-      (this.state.markerOneWidth / 2 + this.state.markerTwoWidth / 2);
+      (this.state.markerOneWidth + this.state.markerTwoWidth);
     const collision = this.state.positionOne >= safePositionOne;
     const equalValues = this.state.valueOne === this.state.valueTwo;
 
@@ -386,7 +387,7 @@ export default class MultiSlider extends React.Component {
           valueOne: positionToValue(
             safePositionOne,
             this.optionsArray,
-            this.props.sliderLength,
+            this.state.sliderAvailableSize,
           ),
         },
         () => {
@@ -419,7 +420,7 @@ export default class MultiSlider extends React.Component {
   endTwo = gestureState => {
     const safePositionTwo =
       this.state.positionOne +
-      (this.state.markerOneWidth / 2 + this.state.markerTwoWidth / 2);
+      (this.state.markerOneWidth + this.state.markerTwoWidth);
     const collision = this.state.positionTwo <= safePositionTwo;
 
     if (gestureState.moveX === 0 && this.props.onToggleTwo) {
@@ -459,9 +460,9 @@ export default class MultiSlider extends React.Component {
               )
             : safePositionTwo,
           valueTwo: positionToValue(
-            safePositionTwo,
+            safePositionTwo - this.state.sliderUnavailableLength,
             this.optionsArray,
-            this.props.sliderLength,
+            this.state.sliderAvailableSize,
           ),
         },
         () => {
@@ -485,17 +486,43 @@ export default class MultiSlider extends React.Component {
   };
 
   measureMarkerOne = ({ nativeEvent }: OnLayout) => {
-    this.setState({
-      markerOneWidth: nativeEvent.layout.width,
-      markerOneHeight: nativeEvent.layout.height,
-    });
+    this.setState(
+      {
+        markerOneWidth: nativeEvent.layout.width,
+        markerOneHeight: nativeEvent.layout.height,
+      },
+      () => {
+        this.setSliderAvailableSize();
+      }
+    );
   };
 
   measureMarkerTwo = ({ nativeEvent }: OnLayout) => {
-    this.setState({
-      markerTwoWidth: nativeEvent.layout.width,
-      markerTwoHeight: nativeEvent.layout.height,
-    });
+    this.setState(
+      {
+        markerTwoWidth: nativeEvent.layout.width,
+        markerTwoHeight: nativeEvent.layout.height,
+      },
+      () => {
+        this.setSliderAvailableSize();
+      }
+    );
+  };
+
+  getSliderAvailableSize = props => {
+    return (props || this.props).sliderLength - this.state.markerOneWidth - this.state.markerTwoWidth;
+  }
+
+  setSliderAvailableSize = () => {
+    const sliderAvailableSize = this.getSliderAvailableSize();
+    const sliderUnavailableLength = this.props.sliderLength - sliderAvailableSize;
+
+    if (sliderAvailableSize != this.state.sliderAvailableSize) {
+      this.setState({
+        sliderAvailableSize,
+        sliderUnavailableLength,
+      });
+    }
   };
 
   render() {
@@ -536,15 +563,13 @@ export default class MultiSlider extends React.Component {
     };
 
     const markerContainerOne = {
-      top:
-        markerOffsetY + this.trackHeight / 2 - this.state.markerOneHeight / 2,
-      left: trackOneLength + markerOffsetX - this.state.markerOneWidth / 2,
+      top: markerOffsetY + this.trackHeight / 2 - this.state.markerOneHeight / 2,
+      left: trackOneLength + markerOffsetX,
     };
 
     const markerContainerTwo = {
-      top:
-        markerOffsetY + this.trackHeight / 2 - this.state.markerTwoHeight / 2,
-      right: trackThreeLength + markerOffsetX - this.state.markerTwoWidth / 2,
+      top: markerOffsetY + this.trackHeight / 2 - this.state.markerTwoHeight / 2,
+      right: trackThreeLength + markerOffsetX,
     };
 
     return (
