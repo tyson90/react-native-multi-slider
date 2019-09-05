@@ -217,8 +217,8 @@ export default class MultiSlider extends React.Component {
       : gestureState.dx + this.state.pastOne;
     const bottom = 0;
     const trueTop =
-      this.state.positionTwo - (this.props.allowOverlap ? 0 : this.stepLength);
-    const top = trueTop === 0 ? 0 : trueTop || this.props.sliderLength;
+      this.state.positionTwo - this.state.sliderUnavailableLength - (this.props.allowOverlap ? 0 : this.stepLength);
+    const top = trueTop === 0 ? 0 : trueTop || this.state.sliderAvailableSize;
     const confined =
       unconfined < bottom ? bottom : unconfined > top ? top : unconfined;
     const slipDisplacement = this.props.touchDimensions.slipDisplacement;
@@ -291,7 +291,7 @@ export default class MultiSlider extends React.Component {
   moveTwo = gestureState => {
     const safePositionTwo =
       this.state.positionOne +
-      (this.state.markerOneWidth + this.state.markerTwoWidth);
+      (this.state.markerOneWidth + this.state.markerTwoWidth) + (this.props.allowOverlap ? 0 : this.stepLength);
     const collision = this.state.positionTwo <= safePositionTwo;
     const unconfined = I18nManager.isRTL
       ? this.state.pastTwo - gestureState.dx
@@ -516,11 +516,25 @@ export default class MultiSlider extends React.Component {
   setSliderAvailableSize = () => {
     const sliderAvailableSize = this.getSliderAvailableSize();
     const sliderUnavailableLength = this.props.sliderLength - sliderAvailableSize;
+    const positionOne = valueToPosition(
+      this.state.valueOne,
+      this.optionsArray,
+      sliderAvailableSize,
+    );
+    const positionTwo = sliderUnavailableLength + valueToPosition(
+      this.state.valueTwo,
+      this.optionsArray,
+      sliderAvailableSize,
+    );
 
     if (sliderAvailableSize != this.state.sliderAvailableSize) {
       this.setState({
         sliderAvailableSize,
         sliderUnavailableLength,
+        positionOne,
+        positionTwo,
+        pastOne: positionOne,
+        pastTwo: positionTwo,
       });
     }
   };
