@@ -166,7 +166,7 @@ export default class MultiSlider extends React.Component {
       const positionOne = valueToPosition(
         nextProps.values[0],
         this.optionsArray,
-        nextProps.sliderLength,
+        this.getSliderAvailableSize(nextProps),
       );
 
       nextState.valueOne = nextProps.values[0];
@@ -176,8 +176,9 @@ export default class MultiSlider extends React.Component {
       const positionTwo = valueToPosition(
         nextProps.values[1],
         this.optionsArray,
-        nextProps.sliderLength,
-      );
+        this.getSliderAvailableSize(nextProps),
+      ) + this.getSliderUnavailableLength(nextProps);
+
       nextState.valueTwo = nextProps.values[1];
       nextState.pastTwo = positionTwo;
       nextState.positionTwo = positionTwo;
@@ -509,9 +510,17 @@ export default class MultiSlider extends React.Component {
     );
   };
 
+	getSliderLength = props => {
+		return (props || this.props).sliderLength;
+	};
+
   getSliderAvailableSize = props => {
-    return (props || this.props).sliderLength - this.state.markerOneWidth - this.state.markerTwoWidth;
-  }
+    return this.getSliderLength(props) - this.state.markerOneWidth - this.state.markerTwoWidth;
+  };
+
+	getSliderUnavailableLength = props => {
+		return this.getSliderLength(props) - this.getSliderAvailableSize(props);
+	};
 
   setSliderAvailableSize = () => {
     const sliderAvailableSize = this.getSliderAvailableSize();
